@@ -47,16 +47,14 @@ function zoho_projects_ConfigOptions()
 {  
         $config = array (
 	              'Domain' => array('Type' => 'dropdown', 'Options' => 'com,eu', 'Description' => '<br>Domain Region'),
-'Authtoken' => array('Type' => 'text', 'Description' => '<br><a href="https://accounts.zoho.com/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi" target="_blank">Click here</a> to generate authtoken.')
-	          );
+'Authtoken' => array('Type' => 'text', 'Description' => '<br><a href="https://accounts.zoho.com/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi" target="_blank">Click here</a> to generate authtoken for US domain.<br><a href="https://accounts.zoho.eu/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi" target="_blank">Click here</a> to generate authtoken for EU domain.')	          );
 	         
 	   return $config;
 }
 function zoho_projects_CreateAccount(array $params)
 {
 	$addonid;
-	//$test = $params['configoption2'];
-	$test = "30dc32c353ba220e1fd44b118dce7953";
+	$test = $params['configoption2'];
 	try {
 	$curl = curl_init();
 	$arrClient = $params['clientsdetails'];
@@ -90,16 +88,16 @@ function zoho_projects_CreateAccount(array $params)
 	);
 	
 	$bodyJson = array('JSONString' => $bodyArr, 'authtoken' => $test);
-   $curlOrg = curl_init();
-   $urlOrg = 'https://payments.zoho.com/restapi/partner/v1/json/subscription';
-   curl_setopt_array($curlOrg, array(
-      CURLOPT_URL => $urlOrg,
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_ENCODING => "",
-      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-      CURLOPT_CUSTOMREQUEST => "POST",
-      CURLOPT_POSTFIELDS => $bodyJson
-   ));
+   	$curlOrg = curl_init();
+   	$urlOrg = 'https://payments.zoho.'.$params['configoption1'].'/restapi/partner/v1/json/subscription';
+   	curl_setopt_array($curlOrg, array(
+	      CURLOPT_URL => $urlOrg,
+	      CURLOPT_RETURNTRANSFER => true,
+	      CURLOPT_ENCODING => "",
+	      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+	      CURLOPT_CUSTOMREQUEST => "POST",
+	      CURLOPT_POSTFIELDS => $bodyJson
+	   ));
 
 		$responseOrg = curl_exec($curlOrg);
 		$respOrgJson = json_decode($responseOrg); 
@@ -202,11 +200,9 @@ function zoho_projects_AdminServicesTabFields(array $params)
 {
  
    try{
-	$url = 'https://accounts.zoho.com/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi';
+	$url = 'https://accounts.zoho.'.$params['configoption1'].'/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi';
 	$cli = Capsule::table('zoho_projects')->where('domain',$params['domain'])->first();
-	//$authtoken = $params['configoption2'];
-	$authtoken = "30dc32c353ba220e1fd44b118dce7953";
-	//$authtoken = "c67aabb8d6815a6205243ace46a1fedc";
+	$authtoken = $params['configoption2'];
 	if(!$authtoken == '') {
 	$authtoken = '<h2 style="color:green;">Authenticated</h2>';
 	}
@@ -220,7 +216,7 @@ function zoho_projects_AdminServicesTabFields(array $params)
 	     'Client Control Panel' => '<a href="'.$cli->url.'" target=_blank>Click here</a>',
 	     'Super Administrator' => $cli->superAdmin,
 	     'ZOID' => $cli->zoid, 
-	     'URL to Manage Customers' => '<a href="https://payments.zoho.com/store/reseller.do?profileId='.$cli->profileid.'" target=_window>Click here</a>'
+	     'URL to Manage Customers' => '<a href="https://payments.zoho.'.$params['configoption1'].'/store/reseller.do?profileId='.$cli->profileid.'" target=_window>Click here</a>'
 	    );
 	 
     } catch (Exception $e) {
@@ -314,7 +310,7 @@ function zoho_projects_ClientArea(array $params)
 	return array(
 	    'tabOverviewReplacementTemplate' => $templateFile,
 	    'templateVariables' => array(
-	     'projectsUrl' => 'https://projects.zoho.com'
+	     'projectsUrl' => 'https://projects.zoho.'.$params['configoption1'].''
 	     //'panelUrl' => $urlToPanel
 	    ),
 	);
