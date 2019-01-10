@@ -45,16 +45,31 @@ function zoho_projects_MetaData()
 }
 function zoho_projects_ConfigOptions()
 {  
-        $config = array (
-	              'Domain' => array('Type' => 'dropdown', 'Options' => 'com,eu', 'Description' => '<br>Domain Region'),
-'Authtoken' => array('Type' => 'text', 'Description' => '<br><a href="https://accounts.zoho.com/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi" target="_blank">Click here</a> to generate authtoken for US domain.<br><a href="https://accounts.zoho.eu/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi" target="_blank">Click here</a> to generate authtoken for EU domain.')	          );
-	         
-	   return $config;
+        return array(
+         // the radio field type displays a series of radio button options
+        'Domain' => array(
+            'Type' => 'radio',
+            'Options' => 'com,eu,in,cn',
+            'Description' => 'Choose your domain!',
+        ),
+        // a text field type allows for single line text input
+        'Authtoken' => array(
+            'Type' => 'text',
+            'Size' => '50',
+            'Description' => '<br><a href="https://accounts.zoho.com/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi" target="_blank">Click here</a> to generate authtoken for US Domain. 
+            <br><a href="https://accounts.zoho.eu/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi" target="_blank">Click here</a> to generate authtoken for EU Domain. 
+            <br><a href="https://accounts.zoho.com.cn/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi" target="_blank">Click here</a> to generate authtoken for CN Domain. 
+            <br><a href="https://accounts.zoho.in/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi" target="_blank">Click here</a> to generate authtoken for IN Domain.',
+        ),
+       
+    );
 }
 function zoho_projects_CreateAccount(array $params)
 {
 	$addonid;
+	$urlOrg;
 	$test = $params['configoption2'];
+	$domain = $params['configoption1'];
 	try {
 	$curl = curl_init();
 	$arrClient = $params['clientsdetails'];
@@ -89,7 +104,14 @@ function zoho_projects_CreateAccount(array $params)
 	
 	$bodyJson = array('JSONString' => $bodyArr, 'authtoken' => $test);
    	$curlOrg = curl_init();
-   	$urlOrg = 'https://payments.zoho.'.$params['configoption1'].'/restapi/partner/v1/json/subscription';
+	if($domain == 'cn')
+	{
+		$urlOrg = 'https://payments.zoho.com.'.$params['configoption1'].'/restapi/partner/v1/json/subscription';		
+	}
+	else 
+	{
+   		$urlOrg = 'https://payments.zoho.'.$params['configoption1'].'/restapi/partner/v1/json/subscription';
+	}
    	curl_setopt_array($curlOrg, array(
 	      CURLOPT_URL => $urlOrg,
 	      CURLOPT_RETURNTRANSFER => true,
@@ -197,11 +219,22 @@ function zoho_projects_TestConnection(array $params)
     );
 }
 function zoho_projects_AdminServicesTabFields(array $params)
-{
- 
+{ 
    try{
-	$url = 'https://accounts.zoho.'.$params['configoption1'].'/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi';
+    $url;
+    $paymenturl;
 	$cli = Capsule::table('zoho_projects')->where('domain',$params['domain'])->first();
+	$domain = $params['configoption1'];
+	if($domain == 'cn') 
+	{
+	    $url = 'https://accounts.zoho.com.'.$domain.'/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi';
+	    $paymenturl = 'https://payments.zoho.com.'.$domain.'/store/reseller.do?profileId='.$cli->profileid;
+	}
+	else
+    {
+        $url = 'https://accounts.zoho.'.$domain.'/apiauthtoken/create?SCOPE=ZohoPayments/partnerapi';
+        $paymenturl = 'https://payments.zoho.'.$domain.'/store/reseller.do?profileId='.$cli->profileid;
+    }
 	$authtoken = $params['configoption2'];
 	if(!$authtoken == '') {
 	$authtoken = '<h2 style="color:green;">Authenticated</h2>';
@@ -213,10 +246,9 @@ function zoho_projects_AdminServicesTabFields(array $params)
 
 	return array(
 	     'Authenticate' => $authtoken,
-	     'Client Control Panel' => '<a href="'.$cli->url.'" target=_blank>Click here</a>',
 	     'Super Administrator' => $cli->superAdmin,
 	     'ZOID' => $cli->zoid, 
-	     'URL to Manage Customers' => '<a href="https://payments.zoho.'.$params['configoption1'].'/store/reseller.do?profileId='.$cli->profileid.'" target=_window>Click here</a>'
+	     'URL to Manage Customers' => '<a href="'.$paymenturl.'" target=_window>Click here</a>'
 	    );
 	 
     } catch (Exception $e) {
@@ -228,7 +260,7 @@ function zoho_projects_AdminServicesTabFields(array $params)
 	    $e->getTraceAsString()
 	);
     }
-	    return array();
+	return array();
 }
 function zoho_projects_AdminServicesTabFieldsSave(array $params)
 {
@@ -304,14 +336,23 @@ function zoho_projects_ClientArea(array $params)
 {
     $serviceAction = 'get_stats';
     $templateFile = 'templates/overview.tpl';
+    $projecturl;
+    $domain = $params['configoption1'];
+    if($domain == 'cn')
+    {
+        $projecturl = 'https://projects.zoho.com.cn';
+    }
+    else
+    {
+        $projecturl = 'https://projects.zoho.'.$domain;
+    }
     try {
       $cli = Capsule::table('zoho_projects')->where('zoid',$params['zoid'])->first();
       $urlToPanel = $cli->url;
 	return array(
 	    'tabOverviewReplacementTemplate' => $templateFile,
 	    'templateVariables' => array(
-	     'projectsUrl' => 'https://projects.zoho.'.$params['configoption1'].''
-	     //'panelUrl' => $urlToPanel
+	     'projectsUrl' => $projecturl
 	    ),
 	);
     } catch (Exception $e) {
