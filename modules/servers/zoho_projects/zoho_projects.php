@@ -139,7 +139,7 @@ function zoho_projects_CreateAccount(array $params)
         		     [
         			   ':authtoken' => $test,
         			   ':domain' => $params['domain'],
-        			   ':server' => "com",
+        			   ':server' => $params['configoption1'],
         			   ':zoid' => $respOrgJson->customid,
         			   ':profileid' => $respOrgJson->profileid,
         			   ':superAdmin' => "true"              
